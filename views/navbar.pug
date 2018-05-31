@@ -1,0 +1,12 @@
+nav.navbar.navbar-default
+  .container-fluid
+    .navbar-header
+      a.navbar-brand(href='#')= title
+    form#message.navbar-form.navbar-right(role='search')
+      .form-group
+        input#m.form-control(type='text', placeholder= placeholder)
+      button.btn.btn-default(type='submit') #{submitText}
+    form#nickName.navbar-form.navbar-right(role='search')
+      .form-group
+        input#nick.form-control(type='text', placeholder= nickPlaceholder)
+      button.btn.btn-default(type='submit') #{submitNick}
