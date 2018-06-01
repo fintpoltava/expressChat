@@ -44,6 +44,7 @@ app.use(function(err, req, res, next) {
 
 var nickNames =  [] ;
 
+
 // socket.io events
 io.on('connection', function(socket){
 
