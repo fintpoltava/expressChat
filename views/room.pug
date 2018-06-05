@@ -1,7 +1,16 @@
 extends layout
 
-block content
+block form
+    form#message.navbar-form.navbar-right(role='search')
+       .form-group
+         input#m.form-control(type='text', placeholder= placeholder)
+         button.btn.btn-default(type='submit') #{submitText}
+    form#nickName.navbar-form.navbar-right(role='search')
+         .form-group
+          input#nick.form-control(type='text', placeholder= nickPlaceholder)
+          button.btn.btn-default(type='submit') #{submitNick}
 
+block content
     script(src='/javascripts/socket.io/socket.io.js')
     script(src='https://code.jquery.com/jquery-1.11.1.js')
     script(src='/javascripts/main.js')

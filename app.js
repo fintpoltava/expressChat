@@ -5,8 +5,15 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var socket_io    = require( "socket.io" );
 
+var session = require('express-session')
+var passport = require('passport')
+var LocalStrategy = require('passport-local').Strategy
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var passportRouter = require('./routes/passport');
+
+var db = require('./db');
 
 var app = express();
 // view engine setup
@@ -22,9 +29,40 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({secret: 'mySecretKey'}));
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(user, done) {
+  db.users.findById(user, function (err, user) {
+    done(null, user);
+  })
+});
+
+passport.use(new LocalStrategy({
+  usernameField: 'login',
+  passwordField: 'password'
+},
+  function(username, password, done) {
+    db.users.findByUsername({ username: username }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) { return done(null, false); }
+      if (user.password != password) { return done(null, false); }
+      return done(null, user);
+    });
+  }
+));
+
+app.use(passport.initialize())
+app.use(passport.session())
+
 
 app.use('/', indexRouter);
+app.use('/', passportRouter);
 app.use('/users', usersRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
