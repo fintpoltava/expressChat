@@ -13,10 +13,6 @@ router.post('/login',
     failureRedirect: '/login',
     failureFlash: true
   })
-  // function (req, res, next) {
-  //   console.log(req.sessionID)
-  //   res.send('OK')
-  // }
 )
 
 
