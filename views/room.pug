@@ -13,6 +13,24 @@ block form
 block content
     script(src='/javascripts/socket.io/socket.io.js')
     script(src='https://code.jquery.com/jquery-1.11.1.js')
+    script(src='http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js')
     script(src='/javascripts/main.js')
-    ul.list-group#messages
+    script#messageTmpl(type='text/x-jquery-tmpl')
+        li.media
+            .media-left
+                a(href='#')
+                    img.media-object(src='http://via.placeholder.com/64x64', alt='')
+            .media-body
+                h4.media-heading ${user}
+                    span
+                    |&nbsp;at ${GetDate(date)}
+                | ${msg}
+    div.row
+        div.col-md-8
+            h4 Messages
+            ul.media-list#messages
+
+        div.col-md-3
+            h4 Users
+            ul.list-group#users
 

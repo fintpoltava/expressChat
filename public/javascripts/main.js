@@ -1,3 +1,8 @@
+function GetDate(jsonDate) {
+  var value = new Date(jsonDate);
+  return value.toISOString().slice(0, 19).replace('T', ' ')
+}
+
 $(function () {
   var socket = io()
   $('form#message').submit(function () {
@@ -13,6 +18,19 @@ $(function () {
   });
 
   socket.on('chat message', function(msg){
-    $('#messages').prepend($('<li>').addClass('list-group-item').text(msg));
+    var text = $('#messageTmpl').tmpl(msg);
+
+    $('#messages').prepend(text);
   });
+
+  socket.on('chat users', function(msg){
+
+    $('#users').html('');
+    msg.forEach(function (t) {
+      $('#users').append("<li class='list-group-item'>"+t+"</li>");
+    })
+  });
+
+
+
 })

@@ -102,17 +102,36 @@ var nickNames = []
 io.on('connection', function (socket) {
 
   nickNames[socket.id] = socket.request.user.displayName
-  io.emit('chat message', 'a user ' + nickNames[socket.id] + ' connected')
+  var data = {
+    msg: 'connected',
+    user: nickNames[socket.id],
+    date: new Date()
+  }
+  io.emit('chat message', data)
+
+  var uniqueNickNames = [];
+
+  for(var key in nickNames)
+  {
+    if (uniqueNickNames.indexOf(nickNames[key]) < 0) {
+      uniqueNickNames.push(nickNames[key]);
+    }
+  }
+
+  console.log(uniqueNickNames);
+  io.emit('chat users', uniqueNickNames)
 
   socket.on('chat message', function (msg) {
-    io.emit('chat message', nickNames[socket.id] + ': ' + msg)
+    var tmp = data
+    tmp.msg = msg
+    io.emit('chat message', tmp )
   })
 
-  socket.on('change name', function (newName) {
-    var oldName = nickNames[socket.id]
-    nickNames[socket.id] = newName
-    io.emit('chat message', oldName + ' change name to ' + newName)
-  })
+  // socket.on('change name', function (newName) {
+  //   var oldName = nickNames[socket.id]
+  //   nickNames[socket.id] = newName
+  //   io.emit('chat message', oldName + ' change name to ' + newName)
+  // })
 
   socket.on('disconnect', function () {
     console.log('user disconnected')
