@@ -2,8 +2,22 @@ version: '3'
 services:
   web:
     build: .
+    container_name: "chat1"
     ports:
      - "3000:3000"
      - "9229:9229"
     volumes:
      - .:/var/www/app
+    links:
+     - mongodb1
+  mongodb1:
+    image: mongo:latest
+    container_name: "mongodb1"
+    environment:
+       - MONGO_DATA_DIR=/data/db
+       - MONGO_LOG_DIR=/dev/null
+    volumes:
+       - ./data/db:/data/db
+    ports:
+       - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet

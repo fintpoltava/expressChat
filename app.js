@@ -8,15 +8,26 @@ var socket_io = require('socket.io')
 var session = require('express-session')
 var passport = require('passport')
 var LocalStrategy = require('passport-local').Strategy
+var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
 var indexRouter = require('./routes/index')
 var usersRouter = require('./routes/users')
 var passportRouter = require('./routes/passport')
 
+var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+
+mongoose.connect('mongodb://mongodb1/expresschat')
+  .then(() =>  console.log('MongoDB connection succesful'))
+  .catch((err) => console.error(err))
+
 var db = require('./db')
 var flash = require('connect-flash')
 
 var app = express()
+
+
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'pug')
@@ -44,34 +55,74 @@ app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
-app.use(session({secret: 'mySecretKey'
-  , store: sessionStore
+app.use(session({
+  secret: 'mySecretKey',
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false
 }))
 
-passport.serializeUser(function (user, done) {
-  done(null, user.id)
-})
+var User = require('./models/User');
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
-passport.deserializeUser(function (user, done) {
-  db.users.findById(user, function (err, user) {
-    done(null, user)
-  })
-})
 
-passport.use(new LocalStrategy({
-    passReqToCallback: true,
-    usernameField: 'login',
-    passwordField: 'password'
+// passport.serializeUser(function (user, done) {
+//   done(null, user.id)
+// })
+//
+// passport.deserializeUser(function (user, done) {
+//   db.users.findById(user, function (err, user) {
+//     done(null, user)
+//   })
+// })
+
+// passport.use(new LocalStrategy({
+//     passReqToCallback: true,
+//     usernameField: 'login',
+//     passwordField: 'password'
+//   },
+//   function (req, username, password, done) {
+//     db.users.findByUsername({username: username}, function (err, user) {
+//       if (err) { return done(err) }
+//       if (!user) { return done(null, false, req.flash('message', 'Invalid username or password')) }
+//       if (user.password != password) { return done(null, false, req.flash('message', 'Invalid username or password')) }
+//       return done(null, user)
+//     })
+//   }
+// ))
+
+// Use the GoogleStrategy within Passport.
+//   Strategies in passport require a `verify` function, which accept
+//   credentials (in this case, a token, tokenSecret, and Google profile), and
+//   invoke a callback with a user object.
+passport.use(new GoogleStrategy({
+    clientID: '192470968215-pnuj925kr4lfaur5n6cq7muoirt5scg1.apps.googleusercontent.com',
+    clientSecret: 'grw4r77LIDx254qSZzwkX_3M',
+    callbackURL: "/auth/google/callback"
   },
-  function (req, username, password, done) {
-    db.users.findByUsername({username: username}, function (err, user) {
+  function(accessToken, refreshToken, profile, done) {
+
+    User.findOne({ google: {id:profile.id} }, function (err, user) {
       if (err) { return done(err) }
-      if (!user) { return done(null, false, req.flash('message', 'Invalid username or password')) }
-      if (user.password != password) { return done(null, false, req.flash('message', 'Invalid username or password')) }
-      return done(null, user)
-    })
+      if (!user) {
+        user = new User({
+          username: profile.displayName+profile.id,
+          displayName: profile.displayName,
+          password: profile.displayName+profile.id,
+          google: {id: profile.id }
+        });
+        user.save(function(err) {
+          if (err) console.log(err);
+          return done(err, user);
+        });
+      }
+      console.log(user)
+      return done(err, user);
+    });
   }
-))
+));
 
 app.use(passport.initialize())
 app.use(passport.session())
@@ -127,11 +178,12 @@ io.on('connection', function (socket) {
     io.emit('chat message', tmp )
   })
 
-  // socket.on('change name', function (newName) {
-  //   var oldName = nickNames[socket.id]
-  //   nickNames[socket.id] = newName
-  //   io.emit('chat message', oldName + ' change name to ' + newName)
-  // })
+  socket.on('change name', function (newName) {
+    var oldName = nickNames[socket.id]
+    nickNames[socket.id] = newName
+
+    io.emit('chat message', oldName + ' change name to ' + newName)
+  })
 
   socket.on('disconnect', function () {
     console.log('user disconnected')
